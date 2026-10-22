@@ -1,0 +1,44 @@
+name: QuixBugs Original Defect Benchmark
+
+on:
+  push:
+    branches:
+      - 'experimental/**'
+    paths:
+      - 'experimental/**'
+      - '.github/workflows/quixbugs-original-defects.yml'
+  workflow_dispatch:
+
+jobs:
+  original-defects:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout ZORRO benchmark harness
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned test dependency
+        run: python -m pip install pytest==9.1.1
+      - name: Run six original published QuixBugs defects
+        run: |
+          python experimental/run_quixbugs.py --out .benchmark-runs/run1 --require-successes 4 --max-candidates 80
+      - name: Validate all published results and original-source integrity
+        run: |
+          python -c "import json; d=json.load(open('.benchmark-runs/run1/BENCHMARK_AUDIT.json')); assert d['attempted']==6 and d['successes']==4, d; assert d['golden_reference_matches']==4, d; assert d['all_original_sources_preserved']; assert d['no_seeded_bugs']; assert all(r['status'] in ('PASS_WITH_HOLDOUT','NO_FIX_FOUND') for r in d['results'])"
+      - name: Upload machine-readable audit and accepted patches
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quixbugs-original-defect-audit
+          if-no-files-found: warn
+          path: |
+            .benchmark-runs/run1/BENCHMARK_AUDIT.json
+            .benchmark-runs/run1/results/*/FINAL_AUDIT.json
+            .benchmark-runs/run1/results/*/VERIFIED_REPAIR.patch

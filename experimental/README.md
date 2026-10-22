@@ -52,3 +52,72 @@ In a separate local test on 2026-10-22, a deliberately injected `==` versus `!=`
 `.github/workflows/experimental-open-repair.yml` verifies the positive fixture, independent holdout, source immutability and a negative-control failure. It doesn't claim to validate arbitrary real-world projects.
 
 The original `run_demo.py` and `multi_engine.py` are unchanged by this experimental addition.
+
+
+## NEW: Repair V2 verified against original QuixBugs defects (2026-10-22)
+
+The original demo and the first mutation prototype above are preserved for reproducibility.
+**V2 is a separate experimental engine** with bounded AST-guided repair templates:
+positional-argument swaps, numeric cursor shifts, collection-variable substitutions,
+numeric-return invariants, and boolean/arithmetic/comparison-operator changes.
+These are generic syntactic transformations. It is still not an LLM, production
+autonomous code agent, or a substitute for a human engineer.
+
+### Meaningful external benchmark
+
+QuixBugs is a real published research benchmark: https://github.com/jkoppel/QuixBugs
+We pin source commit \`4257f44b0ff1181dedaedee6a447e133219fcebf\` and use
+**the original flawed files in \`python_programs/\`**. We did not create or
+inject any errors into these six benchmark samples. Public regression and
+separate holdout tests are maintained in \`benchmark_specs/\`. Only public
+regression tests are used while selecting a patch. After repair, we also compare
+the resulting function's AST with the benchmark's supplied correct reference
+implementation from \`correct_python_programs/\`. No reference source is used
+to generate candidate fixes.
+
+| Original defect | Result | Independent holdout | Exact semantic AST match with reference |
+| --- | --- | --- | --- |
+| \`gcd\`: swapped recursion arguments | **PASS** | 9 passed | Yes |
+| \`bucketsort\`: wrong enumerated collection | **PASS** | 5 passed | Yes |
+| \`is_valid_parenthesization\`: missing final invariant | **PASS** | 8 passed | Yes |
+| \`find_in_sorted\`: cursor fails to advance | **PASS** | 7 passed | Yes |
+| \`powerset\`: missing subsets | **NO FIX FOUND** | not evaluated | No |
+| \`reverse_linked_list\`: missing pointer update | **NO FIX FOUND** | not evaluated | No |
+
+**4/6 genuine, pre-existing benchmark defects repaired** in the predeclared
+six-case experiment; **4/4 repairs match upstream's reference functions** at
+the AST level. Original source files stayed untouched. These six cases were
+*selected deliberately to evaluate the supported classes of transformations
+and include negative controls*. They are NOT a random or representative sample
+of QuixBugs or real software, so 4/6 must not be described as a generalized
+66.7% success rate.
+
+### Reproduce it without an API key
+
+Python 3.10+, Git and \`pytest==9.1.1\` are required.
+
+\`\`\`bash
+python -m pip install pytest==9.1.1
+python experimental/run_quixbugs.py --out benchmark-results/run1 --require-successes 4 --max-candidates 80
+\`\`\`
+
+The harness clones the original benchmark at its pinned revision, uses
+\`repair_v2.py\` on six isolated project copies, then writes:
+\`BENCHMARK_AUDIT.json\`, per-case \`FINAL_AUDIT.json\`, working code copies,
+and \`VERIFIED_REPAIR.patch\` for only accepted patches.
+The GitHub Actions workflow \`quixbugs-original-defects.yml\` independently
+reruns these checks on an ephemeral GitHub runner and publishes JSON audit
+artifacts. Existing work remains in its own folder; no original files are
+silently overwritten.
+
+### Requirements for using V2 on another project
+
+\`\`\`bash
+python experimental/repair_v2.py --project /path/to/trusted-project --target module.py --out /tmp/zorro-trial
+\`\`\`
+
+The project must have \`tests/\` and \`holdout/\` with meaningful pytest tests.
+Use it **only on trusted local projects** and review its diffs. The runner
+executes project code and offers *no malicious-code sandbox*. It cannot safely
+test arbitrary downloaded repositories on your personal laptop.
+A passing test suite is evidence, not a proof of secure production behavior.
