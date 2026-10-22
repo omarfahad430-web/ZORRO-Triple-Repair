@@ -1,0 +1,33 @@
+name: Experimental Open Repair
+on:
+  push:
+    branches:
+      - 'experimental/**'
+  pull_request:
+    paths:
+      - 'experimental/**'
+      - '.github/workflows/experimental-open-repair.yml'
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install test dependency
+        run: python -m pip install pytest==9.1.1
+      - name: Repair seeded demo and verify holdout
+        run: |
+          python experimental/open_repair.py --project experimental/fixtures/cart_rules --target cart_rules.py --out .ci-results/cart --max-rounds 5
+          python -c "import json; d=json.load(open('.ci-results/cart/FINAL_AUDIT.json')); assert d['outcome']=='PASS_WITH_HOLDOUT'; assert d['final_public']['passed']==12 and d['final_public']['failed']==0; assert d['independent_holdout']['passed']==18 and d['independent_holdout']['failed']==0; assert d['original_sha256']==d['original_still_sha256']; assert d['total_changes']==3"
+      - name: Negative control must report failure safely
+        run: |
+          if python experimental/open_repair.py --project experimental/fixtures/negative_control --target normalize.py --out .ci-results/negative --max-rounds 5; then
+            echo "Unexpected success on negative control"
+            exit 1
+          fi
+          python -c "import json; d=json.load(open('.ci-results/negative/FINAL_AUDIT.json')); assert d['outcome']=='NO_FIX_FOUND'; assert d['original_sha256']==d['original_still_sha256']; assert d['total_changes']==0"
