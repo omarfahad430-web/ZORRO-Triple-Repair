@@ -3,6 +3,7 @@ name: QuixBugs Original Defect Benchmark
 on:
   push:
     branches:
+      - 'main'
       - 'experimental/**'
     paths:
       - 'experimental/**'

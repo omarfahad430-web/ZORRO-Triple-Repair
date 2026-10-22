@@ -1,4 +1,32 @@
-# ZORRO Triple Repair — reproducible teaching demo
+# ZORRO Triple Repair — Reproducible Python Repair Research
+
+[![QuixBugs benchmark](https://github.com/omarfahad430-web/ZORRO-Triple-Repair/actions/workflows/quixbugs-original-defects.yml/badge.svg)](https://github.com/omarfahad430-web/ZORRO-Triple-Repair/actions/workflows/quixbugs-original-defects.yml)
+
+**New, experimental:** [ZORRO Repair V2 and full reproducible benchmark](experimental/README.md).
+
+ZORRO now includes a bounded, test-guided Python code-repair prototype that
+recovered the independently documented correct solutions to **4 out of 6
+deliberately selected, original QuixBugs defects**. These were genuine existing
+research benchmark errors, not errors seeded by us. All four passing patches
+matched the benchmark's official reference function syntax trees, and passed
+additional holdout tests. Two harder cases failed without a false success claim.
+
+Run the exact benchmark yourself (Python 3.10+, Git, `pytest==9.1.1`):
+
+```sh
+python -m pip install pytest==9.1.1
+python experimental/run_quixbugs.py --out benchmark-results/run1 --require-successes 4 --max-candidates 80
+```
+
+**Important limitations:** This is not autonomous AI, does not fix arbitrary
+projects and should only execute trusted projects and tests in disposable
+environments. The six samples were selected for the supported transformations;
+4/6 is NOT a general success-rate estimate. See benchmark evidence and
+negative controls in [the V2 documentation](experimental/README.md).
+
+---
+
+## Original pinned teaching demonstration
 
 **الشيفرة متاحة للتجربة محليًا دون مفتاح API أو اشتراك مدفوع.**
 يلزم Python 3.10 أو أحدث وGit. نزّل المستودع عبر **Code → Download ZIP**

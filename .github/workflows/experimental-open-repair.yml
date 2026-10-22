@@ -2,6 +2,7 @@ name: Experimental Open Repair
 on:
   push:
     branches:
+      - 'main'
       - 'experimental/**'
   pull_request:
     paths:
