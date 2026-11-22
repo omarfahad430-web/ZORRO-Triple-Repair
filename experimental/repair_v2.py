@@ -213,7 +213,7 @@ def engine(project: Path, relative_file: Path, out: Path,
     if not (1 <= max_rounds <= 10 and 1 <= max_candidates <= 2000 and 1 <= timeout <= 120):
         raise ValueError("Invalid bounded resource settings")
     original_bytes = target.read_bytes()
-    original = original_bytes.decode("utf-8")
+    original = original_bytes.decode("utf-8").replace("\r\n", "\n").replace("\r", "\n")
     ast.parse(original)
     out.mkdir(parents=True)
     work = out/"working_copy"
